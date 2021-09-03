@@ -15,6 +15,8 @@ Default shorcuts:
 
 # Installation
 
+First of all, you will need to have PostgreSQL installed and `psql` command in the PATH.
+
 ```
 mkdir -p ~/.config/nvim/pack/packages/start/
 git clone https://github.com/mzarnitsa/psql.git ~/.config/nvim/pack/packages/start/
