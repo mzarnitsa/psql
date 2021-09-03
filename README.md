@@ -2,7 +2,7 @@
 
 This is a simple plugin to execute SQL query from inside `nvim`.
 
-The plugin executes query with `psql` command, opens a split buffer in nvim and pastes the results there.
+The plugin executes query with `psql` command, opens a split buffer in nvim and shows results there.
 
 ![screenshot](sql-results.png)
 
