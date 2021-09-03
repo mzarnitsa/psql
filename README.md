@@ -21,7 +21,6 @@ Then just clone this repo into your Neovim package folder:
 ```
 mkdir -p ~/.config/nvim/pack/packages/start/
 git clone https://github.com/mzarnitsa/psql.git ~/.config/nvim/pack/packages/start/
-
 ```
 
 After that add configuration to your `init.lua` file as shown below.
@@ -46,7 +45,6 @@ require('psql').setup({
 })
 
 EOF
-
 ```
 
 All configuration parameters
