@@ -1,8 +1,8 @@
 # Neovim/nvim plugin to execute PostgreSQL queries. Written in Lua
 
-This is a simple plugin to execute sql query from inside nvim editor.
+This is a simple plugin to execute SQL query from inside nvim editor.
 
-The plugin executes query with postgres `psql` command, opens a new buffer in nvim and pastes the results there
+The plugin executes query with `psql` command, opens a split buffer in nvim and pastes the results there.
 
 ![screenshot](sql-results.png)
 
