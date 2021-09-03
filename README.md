@@ -15,6 +15,14 @@ Default shorcuts:
 
 # Installation
 
+```
+mkdir -p ~/.config/nvim/pack/packages/start/
+git clone https://github.com/mzarnitsa/psql.git ~/.config/nvim/pack/packages/start/
+
+```
+
+After that add configuration to your `init.lua` file as shown below.
+
 # Configuration
 
 Minimal. Include the following into `~/.config/nvim/init.lua` file
@@ -23,6 +31,19 @@ Minimal. Include the following into `~/.config/nvim/init.lua` file
 require('psql').setup({
   database_name = 'postgres'
 })
+```
+
+Using `init.vim`
+
+```
+lua << EOF
+
+require('psql').setup({
+  database_name = 'postgres'
+})
+
+EOF
+
 ```
 
 All configuration parameters
