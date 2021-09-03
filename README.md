@@ -1,4 +1,4 @@
-# Neovim/nvim psql plugin
+# Neovim/nvim psql plugin written in Lua
 
 This is a simple plugin to execute sql query from inside nvim editor.
 
