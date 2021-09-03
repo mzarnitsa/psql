@@ -7,9 +7,9 @@ The plugin executes query with `psql` command, opens a split buffer in nvim and 
 ![screenshot](sql-results.png)
 
 Default shorcuts:
-- Execute current paragraph (normal mode) `<leader>-r`
 - Execute line under cursor (normal mode) `<leader>-e`
 - Execute selection (visual mode) `<leader>-e`
+- Execute current paragraph (normal mode) `<leader>-r`
 - Close last result buffer `<leader>-w`
 - Close all result buffers `<leader>-W`
 
