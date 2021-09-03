@@ -7,11 +7,11 @@ The plugin executes query with postgres `psql` command, opens a new buffer in nv
 `picture`
 
 Default shorcuts:
-- [normal mode] `<leader>-e` - execute line under cursor
-- [visual mode] `<leader>-e` - execute selection
-- [normal mode] `<leader>-r` - execute current paragraph
-- `<leader>-w` - close last result buffer
-- `<leader>-W` - close all result buffers
+- Execute current paragraph (normal mode) `<leader>-r`
+- Execute line under cursor (normal mode) `<leader>-e`
+- Execute selection (visual mode) `<leader>-e`
+- Close last result buffer `<leader>-w`
+- Close all result buffers `<leader>-W`
 
 # Installation
 
