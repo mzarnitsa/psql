@@ -39,11 +39,9 @@ Using `init.vim`
 
 ```
 lua << EOF
-
-require('psql').setup({
-  database_name = 'postgres'
-})
-
+  require('psql').setup({
+    database_name = 'postgres'
+  })
 EOF
 ```
 
