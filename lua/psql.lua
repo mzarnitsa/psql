@@ -47,11 +47,19 @@ local function run_query(query)
   tmp_file = os.tmpname()
   f = io.open(tmp_file, 'w+')
   io.output(f)
+ 
+  io.write('\\set QUIET 1 \n')            -- no console output for the following commands
+  io.write('\\timing on \n')              -- show timing of queries
+  io.write('\\pset null (NULL) \n')       -- show nulls as "(NULL)"
+  io.write('\\pset linestyle unicode \n') -- use prettier lines inside the table
+  io.write('\\pset border 2 \n')          -- show pretty lines outside the table
+
   io.write(query)
   io.close(f)
 
   -- execute query
-  local result = vim.fn.systemlist("psql " .. PSQL.config.database_name .. ' -f ' .. tmp_file)
+  local result = vim.fn.systemlist('psql ' .. PSQL.config.database_name .. ' -f ' .. tmp_file)
+
   os.remove(tmp_file)
 
   -- replace result buffer with query results
