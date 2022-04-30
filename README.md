@@ -17,7 +17,14 @@ Default shorcuts:
 
 First of all, you will need to have PostgreSQL installed and `psql` command in the `$PATH`.
 
-Then just clone this repo into your Neovim package folder:
+## Using NeoVim's native package system
+
+```
+Plug 'mzarnitsa/psql'
+```
+
+## Using git
+Clone this repo into your Neovim package folder:
 ```
 mkdir -p ~/.config/nvim/pack/packages/start/
 git clone https://github.com/mzarnitsa/psql.git ~/.config/nvim/pack/packages/start/psql
