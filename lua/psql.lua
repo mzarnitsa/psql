@@ -83,6 +83,10 @@ function PSQL.query_selection()
   col1 = selection_start[2]
   line2 = selection_end[1]
   col2 = selection_end[2] + 1
+  -- full line block (ShiftV), add extra line, as line1 will be == line2 for one liner
+  if col2 == 2147483648 then
+    line2 = line2 + 1
+  end
 
   lines = vim.api.nvim_buf_get_lines(0, line1 - 1, line2, false)
   query = ''
@@ -102,6 +106,8 @@ function PSQL.query_selection()
     query = query .. ' ' .. string.sub(last_line, 0, col2)
   end
 
+  -- debug info. In case I need it again, to not have to look it up
+  -- query = string.format("/* block selection %s:%s, %s:%s */", line1, col1, line2, col2) .. query
   return run_query(query)
 end
 
