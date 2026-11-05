@@ -32,30 +32,34 @@ local function run_query(query)
 
   -- open horizontally split new window
   vim.cmd('split')
-  win = vim.api.nvim_get_current_win()
-  buf = vim.api.nvim_create_buf(true, true)
+  local win = vim.api.nvim_get_current_win()
+  local buf = vim.api.nvim_create_buf(true, true)
   vim.api.nvim_win_set_buf(win, buf)
 
   -- remember new buffer for later to be able to close it
   table.insert(query_result_buffers, buf)
 
+  local query_lines = vim.split(query, '\n')
+
   -- show "Running ..." text until query is finished executing
-  vim.api.nvim_buf_set_lines(buf, 0, -1, true, {'# Running...', query, ''})
+  local running_lines = {'# Running...'}
+  for _, l in ipairs(query_lines) do
+    table.insert(running_lines, l)
+  end
+  table.insert(running_lines, '')
+  vim.api.nvim_buf_set_lines(buf, 0, -1, true, running_lines)
   vim.cmd('redraw')
 
   -- save query to a temp file
-  tmp_file = os.tmpname()
-  f = io.open(tmp_file, 'w+')
-  io.output(f)
- 
-  io.write('\\set QUIET 1 \n')            -- no console output for the following commands
-  io.write('\\timing on \n')              -- show timing of queries
-  io.write('\\pset null (NULL) \n')       -- show nulls as "(NULL)"
-  io.write('\\pset linestyle unicode \n') -- use prettier lines inside the table
-  io.write('\\pset border 2 \n')          -- show pretty lines outside the table
-
-  io.write(query)
-  io.close(f)
+  local tmp_file = os.tmpname()
+  local f = io.open(tmp_file, 'w+')
+  f:write('\\set QUIET 1 \n')            -- no console output for the following commands
+  f:write('\\timing on \n')              -- show timing of queries
+  f:write('\\pset null (NULL) \n')       -- show nulls as "(NULL)"
+  f:write('\\pset linestyle unicode \n') -- use prettier lines inside the table
+  f:write('\\pset border 2 \n')          -- show pretty lines outside the table
+  f:write(query)
+  f:close()
 
   -- execute query
   local result = vim.fn.systemlist('psql ' .. PSQL.config.database_name .. ' -f ' .. tmp_file)
@@ -63,47 +67,65 @@ local function run_query(query)
   os.remove(tmp_file)
 
   -- replace result buffer with query results
-  vim.api.nvim_buf_set_lines(buf, 0, -1, true, {query, ''})
+  local header_lines = {}
+  for _, l in ipairs(query_lines) do
+    table.insert(header_lines, l)
+  end
+  table.insert(header_lines, '')
+  vim.api.nvim_buf_set_lines(buf, 0, -1, true, header_lines)
   vim.api.nvim_buf_set_lines(buf, -1, -1, true, result)
 end
 
 function PSQL.query_current_line()
-  line_number = vim.api.nvim_win_get_cursor(0)[1]
-  query = vim.api.nvim_buf_get_lines(0, line_number - 1, line_number, false)
+  local line_number = vim.api.nvim_win_get_cursor(0)[1]
+  local query = vim.api.nvim_buf_get_lines(0, line_number - 1, line_number, false)
 
   query = query[1]
   return run_query(query)
 end
 
 function PSQL.query_selection()
-  selection_start = vim.api.nvim_buf_get_mark(0, "<")
-  selection_end = vim.api.nvim_buf_get_mark(0, ">")
+  local selection_start = vim.api.nvim_buf_get_mark(0, "<")
+  local selection_end = vim.api.nvim_buf_get_mark(0, ">")
 
-  line1 = selection_start[1]
-  col1 = selection_start[2]
-  line2 = selection_end[1]
-  col2 = selection_end[2] + 1
-  -- full line block (ShiftV), add extra line, as line1 will be == line2 for one liner
-  if col2 == 2147483648 then
-    line2 = line2 + 1
+  local line1 = selection_start[1]
+  local col1 = selection_start[2]
+  local line2 = selection_end[1]
+  local col2 = selection_end[2] + 1
+
+  if line1 == 0 or line2 == 0 then
+    print('psql plugin: no selection found')
+    return
   end
 
-  lines = vim.api.nvim_buf_get_lines(0, line1 - 1, line2, false)
-  query = ''
+  if line1 > line2 or (line1 == line2 and col1 > col2) then
+    line1, line2 = line2, line1
+    col1, col2 = col2, col1
+  end
+
+  local total_lines = vim.api.nvim_buf_line_count(0)
+  line1 = math.max(1, math.min(line1, total_lines))
+  line2 = math.max(1, math.min(line2, total_lines))
+
+  local lines = vim.api.nvim_buf_get_lines(0, line1 - 1, line2, false)
+  if #lines == 0 then
+    print('psql plugin: selection is empty')
+    return
+  end
+
+  local query = ''
 
   if line2 == line1 then
     query = string.sub(lines[1], col1+1, col2)
   else
     query = string.sub(lines[1], col1+1)
 
-    last_line_index = line2-line1+1
-
-    for i = 2, last_line_index-1, 1 do
+    for i = 2, #lines - 1 do
       query = query .. ' ' .. lines[i]
     end
 
-    last_line = lines[last_line_index]
-    query = query .. ' ' .. string.sub(last_line, 0, col2)
+    local last_line = lines[#lines]
+    query = query .. ' ' .. string.sub(last_line, 1, col2)
   end
 
   -- debug info. In case I need it again, to not have to look it up
@@ -112,11 +134,11 @@ function PSQL.query_selection()
 end
 
 function PSQL.query_paragraph()
-  line1 = vim.api.nvim_buf_get_mark(0, "(")[1]
-  line2 = vim.api.nvim_buf_get_mark(0, ")")[1]
+  local line1 = vim.api.nvim_buf_get_mark(0, "(")[1]
+  local line2 = vim.api.nvim_buf_get_mark(0, ")")[1]
 
-  lines = vim.api.nvim_buf_get_lines(0, line1 - 1, line2, false)
-  query = ''
+  local lines = vim.api.nvim_buf_get_lines(0, line1 - 1, line2, false)
+  local query = ''
   for _,v in pairs(lines) do
     query = query .. ' ' .. v
   end
@@ -125,15 +147,15 @@ function PSQL.query_paragraph()
 end
 
 function PSQL.close_latest_result()
-  buf = table.remove(query_result_buffers)
+  local buf = table.remove(query_result_buffers)
   if buf == nil then return end
 
   vim.cmd('bd ' .. buf)
 end
 
 function PSQL.close_all_results()
-  while table.getn(query_result_buffers) > 0 do
-    buf = table.remove(query_result_buffers)
+  while #query_result_buffers > 0 do
+    local buf = table.remove(query_result_buffers)
 
     vim.cmd('bd ' .. buf)
   end
@@ -146,7 +168,7 @@ function PSQL.setup(config)
     error('psql plugin: database_name was not provided')
   end
 
-  map_opts = {noremap = true, silent = true, nowait = true}
+  local map_opts = {noremap = true, silent = true, nowait = true}
   vim.api.nvim_set_keymap('n', PSQL.config.execute_paragraph, ":lua require('psql').query_paragraph()<CR>", map_opts)
   vim.api.nvim_set_keymap('n', PSQL.config.execute_line, ":lua require('psql').query_current_line()<CR>", map_opts)
   vim.api.nvim_set_keymap('v', PSQL.config.execute_selection, ":lua require('psql').query_selection()<CR>", map_opts)
