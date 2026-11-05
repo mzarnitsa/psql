@@ -135,10 +135,34 @@ function PSQL.query_selection()
 end
 
 function PSQL.query_paragraph()
-  local line1 = vim.api.nvim_buf_get_mark(0, "(")[1]
-  local line2 = vim.api.nvim_buf_get_mark(0, ")")[1]
+  local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+  local all_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local total_lines = #all_lines
 
-  local lines = vim.api.nvim_buf_get_lines(0, line1 - 1, line2, false)
+  if total_lines == 0 then
+    print('psql plugin: buffer is empty')
+    return
+  end
+
+  if all_lines[cursor_line]:match('^%s*$') then
+    print('psql plugin: cursor is on an empty line')
+    return
+  end
+
+  local line1 = cursor_line
+  while line1 > 1 and not all_lines[line1 - 1]:match('^%s*$') do
+    line1 = line1 - 1
+  end
+
+  local line2 = cursor_line
+  while line2 < total_lines and not all_lines[line2 + 1]:match('^%s*$') do
+    line2 = line2 + 1
+  end
+
+  local lines = {}
+  for i = line1, line2 do
+    table.insert(lines, all_lines[i])
+  end
   local query = table.concat(lines, '\n')
 
   return run_query(query)
