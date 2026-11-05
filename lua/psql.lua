@@ -39,15 +39,20 @@ local function run_query(query)
   -- remember new buffer for later to be able to close it
   table.insert(query_result_buffers, buf)
 
+  -- format query into a single line for buffer display
   local query_lines = vim.split(query, '\n')
+  local display_parts = {}
+  for _, line in ipairs(query_lines) do
+    local trimmed = string.gsub(line, '^%s*(.-)%s*$', '%1')
+    if trimmed ~= '' then
+      trimmed = string.gsub(trimmed, '%-%-%s*(.-)$', '/* %1 */')
+      table.insert(display_parts, trimmed)
+    end
+  end
+  local display_query = table.concat(display_parts, ' ')
 
   -- show "Running ..." text until query is finished executing
-  local running_lines = {'# Running...'}
-  for _, l in ipairs(query_lines) do
-    table.insert(running_lines, l)
-  end
-  table.insert(running_lines, '')
-  vim.api.nvim_buf_set_lines(buf, 0, -1, true, running_lines)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, true, {'# Running...', display_query, ''})
   vim.cmd('redraw')
 
   -- save query to a temp file
@@ -59,6 +64,7 @@ local function run_query(query)
   f:write('\\pset linestyle unicode \n') -- use prettier lines inside the table
   f:write('\\pset border 2 \n')          -- show pretty lines outside the table
   f:write(query)
+  f:write('\n')
   f:close()
 
   -- execute query
@@ -67,12 +73,7 @@ local function run_query(query)
   os.remove(tmp_file)
 
   -- replace result buffer with query results
-  local header_lines = {}
-  for _, l in ipairs(query_lines) do
-    table.insert(header_lines, l)
-  end
-  table.insert(header_lines, '')
-  vim.api.nvim_buf_set_lines(buf, 0, -1, true, header_lines)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, true, {display_query, ''})
   vim.api.nvim_buf_set_lines(buf, -1, -1, true, result)
 end
 
@@ -121,11 +122,11 @@ function PSQL.query_selection()
     query = string.sub(lines[1], col1+1)
 
     for i = 2, #lines - 1 do
-      query = query .. ' ' .. lines[i]
+      query = query .. '\n' .. lines[i]
     end
 
     local last_line = lines[#lines]
-    query = query .. ' ' .. string.sub(last_line, 1, col2)
+    query = query .. '\n' .. string.sub(last_line, 1, col2)
   end
 
   -- debug info. In case I need it again, to not have to look it up
@@ -138,10 +139,7 @@ function PSQL.query_paragraph()
   local line2 = vim.api.nvim_buf_get_mark(0, ")")[1]
 
   local lines = vim.api.nvim_buf_get_lines(0, line1 - 1, line2, false)
-  local query = ''
-  for _,v in pairs(lines) do
-    query = query .. ' ' .. v
-  end
+  local query = table.concat(lines, '\n')
 
   return run_query(query)
 end
